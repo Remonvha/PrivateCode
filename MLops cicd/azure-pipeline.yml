@@ -1,0 +1,28 @@
+trigger:
+  - main
+
+pool:
+  name: Hosted Ubuntu 1604
+
+steps:
+  - task: UsePythonVersion@0
+    displayName: "Use Python 3.7"
+    inputs:
+      versionSpec: 3.7
+
+  - script: |
+      pip install pytest request setuptools wheel
+      pip install -U databricks-cli
+      dbfs ls
+    displayName: "Load Python dependencies"
+
+  - checkout: self
+    persistCredentials: true
+    clean: true
+
+  - script: git checkout master
+    displayName: "Get Latest Branch"
+
+  - script: |
+      databricks workspace import $BUILD_SOURCEDIRECTORY/"notebooks/users/<<username>>/ml/deploy/deploy_azureml_ml_model.py"
+    displayName: "Import ML deploy Notebook"
