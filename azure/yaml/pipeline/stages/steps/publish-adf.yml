@@ -1,0 +1,14 @@
+steps:
+#Publish ADF task : https://github.com/SQLPlayer/azure.datafactory.devops
+- task: SQLPlayer.DataFactoryTools.PublishADF.PublishADFTask@0
+  displayName: Publish ADF from JSON files
+  inputs:
+    azureSubscription: ${{parameters.azureSubscription}}
+    CreateNewInstance: ${{parameters.datafactory.createNewInstance}}
+    DataFactoryName: ${{parameters.datafactory.dataFactoryName}}    
+    DataFactoryCodePath: ${{ format('{0}/{1}/{2}', '$(Pipeline.Workspace)', parameters.artifactName, parameters.datafactory.dataFactoryCodePath) }}
+    DeleteNotInSource: ${{parameters.datafactory.deleteNotInSource}}
+    location: ${{parameters.location}}
+    ResourceGroupName: ${{parameters.resourceGroup}}
+    StageType: ${{parameters.datafactory.stage.stageType}}
+    StageConfigFile: ${{ format('{0}/{1}/{2}', '$(Pipeline.Workspace)', parameters.artifactName, parameters.datafactory.stage.stageConfigFile) }}

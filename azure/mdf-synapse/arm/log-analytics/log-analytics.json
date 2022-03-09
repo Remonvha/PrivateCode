@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "general": {
+      "defaultValue": {
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "LastModifiedDate": "[utcNow()]",
+          "Project": "<<project-name>>"
+        }        
+      },
+      "type": "object"
+    },
+    "logAnalytics": {
+      "defaultValue": {
+        "name": "<<log-analytics-name>>",
+        "retentionInDays": "7",
+        "sku": "free",
+        "query": [
+          {
+            "name": "<<query-name>>",
+            "category": "<<query-category>>",
+            "displayName": "<<query-displayName>>",
+            "query": "<<kusto-query>>"
+          }
+        ]
+      },
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "type": "microsoft.operationalinsights/workspaces",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[parameters('logAnalytics').name]",
+      "location": "[parameters('general').location]",
+      "tags": "[parameters('general').tags]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('logAnalytics').sku]"
+        },
+        "retentionInDays": "[parameters('logAnalytics').retentionInDays]"
+      }
+    // },
+    // {
+    //   "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+    //   "apiVersion": "2020-08-01",
+    //   "name": "[concat(parameters('logAnalytics').name, '/', parameters('logAnalytics').query[copyIndex()].name)]",
+    //   "condition": "[greater(length(parameters('logAnalytics').query), 0)]",
+    //   "dependsOn": [
+    //     "[concat('Microsoft.OperationalInsights/workspaces/', parameters('logAnalytics').name)]"
+    //   ],
+    //   "properties": {
+    //     "Category": "[parameters('logAnalytics').query[copyIndex()].category]",
+    //     "etag": "*",
+    //     "DisplayName": "[parameters('logAnalytics').query[copyIndex()].displayName]",
+    //     "Query": "[parameters('logAnalytics').query[copyIndex()].query]",
+    //     "Version": 2
+    //   },
+    //   "copy": {
+    //     "name": "law-query-copy",
+    //     "mode": "Parallel",
+    //     "count": "[length(parameters('logAnalytics').query)]"
+    //   }
+    }    
+  ]
+}

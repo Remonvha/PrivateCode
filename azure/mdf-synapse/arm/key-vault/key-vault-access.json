@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "keyVault": {
+        "defaultValue": {
+          "name": "<<key-vault-name>>"
+        },
+        "metadata": {
+          "description": "Properties of the Key Vault instance."
+        },
+        "type": "object"
+      },
+      "objectId": {
+        "defaultValue": "<<securestring>>",
+        "metadata": {
+          "description": "Value of the objectId."
+        },
+        "type": "securestring"
+      }
+    },
+    "variables": {},
+    "resources": [
+      {
+        "type": "Microsoft.KeyVault/vaults/accessPolicies",
+        "apiVersion": "2016-10-01",
+        "name": "[concat(parameters('keyVault').name, '/add')]",
+        "properties": {
+          "accessPolicies": [
+            {
+              "tenantId": "[subscription().tenantId]",
+              "objectId": "[parameters('objectId')]",
+              "permissions": {
+                "keys": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore"
+                ],
+                "secrets": [
+                  "Get",
+                  "List",
+                  "Set",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore"
+                ],
+                "certificates": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "ManageContacts",
+                  "ManageIssuers",
+                  "GetIssuers",
+                  "ListIssuers",
+                  "SetIssuers",
+                  "DeleteIssuers"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }

@@ -1,0 +1,11 @@
+# performs a inline powershell Script with output variable
+steps:
+  - task: AzurePowerShell@5
+    condition: always() 
+    displayName: Remove-Service-Principal
+    inputs:
+      azureSubscription: ${{parameters.azureSubscription}}
+      ScriptType: 'InlineScript'
+      Inline: |
+        Remove-AzADApplication -ApplicationId ${{parameters.sp.appId}} -Force
+      azurePowerShellVersion: 'LatestVersion'

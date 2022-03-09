@@ -1,0 +1,54 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccount": {
+      "defaultValue": {
+        "containers": {
+          "myContainer": "<<container-name>>"
+        },
+        "name": "<<storage-account-name>>"
+      },
+      "metadata": {
+        "description": "Properties of the storage account."
+      },
+      "type": "object"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts/managementPolicies",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(parameters('storageAccount').name, '/', 'default')]",      
+      "dependsOn": [
+      ],
+      "properties": {
+        "policy": {
+          "rules": [
+            {
+              "enabled": "true",
+              "name": "[parameters('storageAccount').policies.deletePolicyName]",
+              "type": "Lifecycle",
+              "definition": {
+                "actions": {
+                  "baseBlob": {
+                    "delete": {
+                      "daysAfterModificationGreaterThan": "[parameters('storageAccount').policies.deleteAfterDays]"
+                    }
+                  }
+                },
+                "filters": {
+                  "blobTypes": [
+                    "blockBlob"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

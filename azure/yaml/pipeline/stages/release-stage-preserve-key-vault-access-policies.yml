@@ -1,0 +1,24 @@
+jobs:
+  - deployment: 
+    environment: ${{parameters.devOpsEnvironment}}
+    continueOnError: false
+    pool: ${{ parameters.pool }}
+    workspace:
+      clean: all
+
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+          #Release ARM   
+          - template: steps/azure-resource-group-deployment-orchestrated-release-preserve-key-vault-access-policies.yml   # Template reference
+            parameters:
+              artifactName: ${{parameters.artifacts.artifactNameARM}}
+              azureSubscription: ${{parameters.azureSubscription}}
+              location: ${{parameters.location}}
+              resourceGroup: ${{parameters.resourceGroup}}
+              storageAccount: ${{parameters.storageAccount}}
+              masterTemplate: ${{ format('{0}/{1}/{2}','$(Pipeline.Workspace)', parameters.artifacts.artifactNameSolution, 'orchestrator.json') }}
+              parametersFile: ${{ format('{0}/{1}/{2}-{3}{4}', '$(Pipeline.Workspace)', parameters.artifacts.artifactNameSolution, 'parameters/orchestrator.parameters', parameters.environment, '.json') }}              
+              keyVault: ${{parameters.keyVault}}
+              azADGroupDisplayName: ${{parameters.azADGroupDisplayName}}

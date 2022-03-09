@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyVault": {
+      "defaultValue": {
+        "administratorObjectId": "<<admin-object-id>>",
+        "name": "<<key-vault-name>>",
+        "secrets": {
+          "mySecret": "<<my-secret-name>>"
+        }
+      },
+      "metadata": {
+        "description": "Properties of the Key Vault instance, dedicated for secrets and certificates."
+      },
+      "type": "secureObject"
+    },
+    "logAnalytics": {
+      "defaultValue": {
+        "name": "<<log-analytics-name>>",
+        "resourceGroup": "<<resourceGroup>>",
+        "retentionInDays": "7",
+        "sku": "free",
+        "query": [
+          {
+            "name": "<<query-name>>",
+            "category": "<<query-category>>",
+            "displayName": "<<query-displayName>>",
+            "query": "<<kusto-query>>"
+          }
+        ]
+      },
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-05-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVault').name)]"
+      ],
+      "name": "[concat(parameters('keyVault').name, '/Microsoft.Insights/SendToLogAnalytics')]",
+      "properties": {
+        "workspaceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('logAnalytics').resourceGroup, '/providers/Microsoft.OperationalInsights/workspaces/', parameters('logAnalytics').name)]",
+        "logs": [
+          {
+            "category": "AuditEvent",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      },
+      "type": "Microsoft.KeyVault/vaults/providers/diagnosticSettings"
+    }
+  ]
+}

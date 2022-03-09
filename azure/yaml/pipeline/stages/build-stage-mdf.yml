@@ -1,0 +1,32 @@
+﻿jobs:
+- job: buildAndVerify
+  displayName: Build/Verification
+  continueOnError: false
+  pool: ${{parameters.pool}}
+
+  workspace:
+    clean: all
+
+  steps:
+  #Build ARM   
+  - template: steps/azure-resource-group-deployment-orchestrated-build.yml   # Template reference
+    parameters:
+      azureSubscription: ${{parameters.azureSubscription}}
+      location: ${{parameters.location}}
+      masterTemplate: ${{ format('{0}/{1}', parameters.templateDirectory.mdf, 'orchestrator.json') }}
+      parametersFile:  ${{ format('{0}/{1}{2}{3}',parameters.templateDirectory.mdf ,'parameters/orchestrator.parameters-',parameters.environment,'.json') }}
+      resourceGroup: ${{parameters.resourceGroup}}
+      storageAccount: ${{parameters.storageAccount}}
+      templateDirectory: ${{parameters.templateDirectory.arm}}
+
+  # #Build database project
+  - template: steps/msbuild-solution.yml  # Template reference
+    parameters:
+      solution: ${{parameters.solution}}
+
+  #Publish each artifact
+  - ${{ each artifact in parameters.artifacts }}: 
+    - template: steps/publish-artifact.yml
+      parameters:
+        artifactName: ${{artifact.artifactName}}
+        templateDirectory: ${{artifact.directory}}

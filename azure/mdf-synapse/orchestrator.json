@@ -1,0 +1,207 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "accessPoliciesKeyVault": {
+      "defaultValue": { "list": [] },
+      "type": "secureObject"
+    },
+    "azADGroupObjectId": {
+      "defaultValue": "<<azADGroupObjectId>>",
+      "metadata": {
+        "description": "ObjectId of the AzADGroup, as defined in the build/release pipeline."
+      },
+      "type": "securestring"
+    },
+    "general": {
+      "metadata": {
+        "description": "Gets or sets a list of general key value pairs [tags, environemnt, location, ect.] that describe the resource."
+      },
+      "type": "object"
+    },
+    "keyVault": {
+      "metadata": {
+        "description": "Properties of the Key Vault instance, dedicated for secrets and certificates."
+      },
+      "type": "object"
+    },
+    "logAnalytics": {
+      "metadata": {
+        "description": "Properties of the Log Analytics Workspace."
+      },
+      "type": "object"
+    },
+    "storageAccountCICD": {
+      "metadata": {
+        "description": "Properties of the CICD Storage Account, as defined in the build/release pipeline."
+      },
+      "type": "object"
+    },
+    "synapse": {
+      "metadata": {
+        "description": "Properties of the synapse workspace."
+      },
+      "type": "object"
+    }
+  },
+  "variables": {
+    "storageBlobDataContributorRoleID": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+    "storageRoleUniqueId": "8fe78dc1-1584-4697-b0c1-44f0b151300f"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-10-01",
+      "name": "kv-shared",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "keyVault": {
+            "value": "[parameters('keyVault')]"
+          },
+          "logAnalytics": {
+            "value": "[parameters('logAnalytics')]"
+          },
+          "general": {
+            "value": "[parameters('general')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('storageAccountCICD').url,'/key-vault/key-vault.json', parameters('storageAccountCICD').sasToken)]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "kv-shared-access",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "kv-shared"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "keyVault": {
+            "value": "[parameters('keyVault')]"
+          },
+          "objectId": {
+            "value": "[parameters('azADGroupObjectId')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('storageAccountCICD').url,'/key-vault/key-vault-access.json', parameters('storageAccountCICD').sasToken)]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "log-analytics",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "general": {
+            "value": "[parameters('general')]"
+          },
+          "logAnalytics": {
+            "value": "[parameters('logAnalytics')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('storageAccountCICD').url,'/log-analytics/log-analytics.json', parameters('storageAccountCICD').sasToken)]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "synapse-storage",
+      "resourceGroup": "[parameters('synapse').resourceGroupName]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccount": {
+            "value": "[parameters('synapse').storageAccount]"
+          },
+          "general": {
+            "value": "[parameters('general')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('storageAccountCICD').url,'/storage-account/storage-account.json', parameters('storageAccountCICD').sasToken)]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "synapse-storage-roleAssignments",
+      "resourceGroup": "[parameters('synapse').resourceGroupName]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "synapse-storage",
+        "synapse"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "roleAssignments": {
+            "value": {
+              "name": "[concat(parameters('synapse').storageAccount.name, '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', variables('storageBlobDataContributorRoleID'), '/', parameters('synapse').name, '/', variables('storageRoleUniqueId'))))]",
+              "location": "[parameters('synapse').storageAccount.location]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleID'))]",
+                "principalId": "[reference(concat('Microsoft.Synapse/workspaces/', parameters('synapse').name), '2019-06-01-preview', 'Full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('storageAccountCICD').url,'/storage-account/storage-role-assignment.json', parameters('storageAccountCICD').sasToken)]", 
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-10-01",
+      "name": "synapse",
+      "resourceGroup": "[parameters('synapse').resourceGroupName]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "synapse-storage", 
+        "kv-shared"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "synapse": {
+            "value": "[parameters('synapse')]"
+          },
+          "general": {
+            "value": "[parameters('general')]"
+          },
+          "storageAccountCICD": {
+            "value": "[parameters('storageAccountCICD')]"
+          },
+          "keyVault": {
+            "value": "[parameters('keyVault')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('storageAccountCICD').url,'/synapse/synapse.json', parameters('storageAccountCICD').sasToken)]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

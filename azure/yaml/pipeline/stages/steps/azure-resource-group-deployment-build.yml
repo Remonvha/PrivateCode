@@ -1,0 +1,12 @@
+#Azure Resource Group Deployment task : https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/azure-resource-group-deployment?view=azure-devops
+- task: AzureResourceGroupDeployment@2
+  name: 'Validate ARM templates'
+  inputs:
+    azureSubscription: ${{parameters.azureSubscription}}
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: ${{parameters.resourceGroup}}
+    location: ${{parameters.location}}
+    templateLocation: 'Linked artifact'
+    csmFile: ${{parameters.masterTemplate}}
+    csmParametersFile: ${{parameters.parametersFile}}
+    deploymentMode: 'Validation'

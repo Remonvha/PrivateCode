@@ -1,0 +1,11 @@
+steps:
+- checkout: self
+# performs a file path powershell script 
+- task: AzurePowerShell@5
+  name: filepathPowershelltask
+  inputs:
+    azureSubscription: ${{parameters.azureSubscription}}
+    ScriptType: 'FilePath'
+    ScriptPath:  ${{parameters.scriptFilePath}}
+    ScriptArguments: ${{parameters.scriptArguments}}
+    azurePowerShellVersion: 'LatestVersion'

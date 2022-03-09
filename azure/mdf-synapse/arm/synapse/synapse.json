@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "general": {
+            "type": "object"
+        },
+        "keyVault": {
+            "type": "object"
+        },
+        "sqlServerAdminPassword": {
+            "type": "securestring",
+            "defaultValue": "[concat('A', 0 ,uniqueString(Guid(subscription().id)), 'x',1, '!')]"
+        },
+        "storageAccountCICD": {
+            "type": "secureObject"
+        },
+        "synapse": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Synapse/workspaces",
+            "apiVersion": "2021-03-01",
+            "name": "[parameters('synapse').name]",
+            "location": "[parameters('synapse').location]",
+            "tags": "[parameters('general').tags]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "managedResourceGroupName": "[concat(resourceGroup().name, '-managed-', parameters('general').env)]", 
+                "defaultDataLakeStorage": "[parameters('synapse').properties.defaultDataLakeStorage]",
+                "sqlAdministratorLogin": "[parameters('synapse').properties.sqlAdministratorLogin]",
+                "sqlAdministratorLoginPassword": "[parameters('sqlServerAdminPassword')]",
+                "privateEndpointConnections": [],
+                "encryption": {}
+                },
+            "resources": [
+                {
+                    "apiVersion": "2019-06-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Synapse/workspaces/', parameters('synapse').name)]"
+                    ],
+                    "location": "[parameters('synapse').location]",
+                    "name": "allowAll",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "255.255.255.255"
+                    },
+                    "type": "firewallrules"
+                },
+                {
+                    "apiVersion": "2019-06-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Synapse/workspaces/', parameters('synapse').name)]"
+                    ],
+                    "location": "[parameters('synapse').location]",
+                    "name": "default",
+                    "properties": {
+                        "grantSqlControlToManagedIdentity": {
+                            "desiredState": "[parameters('synapse').grantWorkspaceIdentityControlForSql]"
+                        }
+                    },
+                    "type": "managedIdentitySqlControlSettings"
+                }
+            ]
+        },
+        {
+            "apiVersion": "2020-10-01",
+            "name": "kv-sql-secret",
+            "type": "Microsoft.Resources/deployments", 
+            "dependsOn": [],
+            "resourceGroup": "[parameters('keyVault').resourceGroupName]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "keyVault": {
+                        "value": "[parameters('keyVault')]"
+                    },
+                    "secretName": {
+                        "value": "[concat(parameters('synapse').name,'-sql-admin-pwd')]"
+                    },
+                    "secretValue": {
+                        "value": "[parameters('sqlServerAdminPassword')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('storageAccountCICD').url,'/key-vault/key-vault-secret.json', parameters('storageAccountCICD').sasToken)]",
+                    "contentVersion": "1.0.0.0"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

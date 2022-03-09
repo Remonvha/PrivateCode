@@ -1,0 +1,17 @@
+{
+	"name": "Demo script",
+	"properties": {
+		"content": {
+			"query": "Select @@version",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "Built-in",
+				"databaseName": "master"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

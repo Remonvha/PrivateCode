@@ -1,0 +1,43 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccount": {
+            "type": "object"
+        },
+        "general": {
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccount').name]",
+            "apiVersion": "2018-02-01",
+            "location": "[parameters('storageAccount').location]",
+            "properties": {
+                "accessTier": "[parameters('storageAccount').accessTier]",
+                "supportsHttpsTrafficOnly": "[parameters('storageAccount').supportsHttpsTrafficOnly]",
+                "isHnsEnabled": "[parameters('storageAccount').isHnsEnabled]"
+            },
+            "sku": "[parameters('storageAccount').sku]",
+            "kind": "[parameters('storageAccount').kind]",
+            "tags": "[parameters('general').tags]"
+        },
+        {
+            "condition": "[greater(length(parameters('storageAccount').blobs),0)]",
+            "name": "[concat(parameters('storageAccount').name,'/default/', parameters('storageAccount').blobs[copyIndex()].name)]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2018-02-01",
+            "properties": "[parameters('storageAccount').blobs[copyIndex()].properties]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccount').Name)]"
+            ],
+            "copy": {
+                "name": "api-loop",
+                "mode": "Parallel",
+                "count": "[length(parameters('storageAccount').blobs)]"
+            }
+        }
+    ]
+}

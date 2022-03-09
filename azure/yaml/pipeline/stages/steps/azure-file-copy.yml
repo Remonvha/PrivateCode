@@ -1,0 +1,15 @@
+#File Copy task: https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/azure-file-copy?view=azure-devops
+- task: AzureFileCopy@3
+  name: 'Copy Files'
+  inputs:
+    SourcePath: ${{parameters.templateDirectory}}
+    azureSubscription: ${{parameters.azureSubscription}}
+    Destination: 'AzureBlob'
+    storage: ${{parameters.storageAccount.name}}
+    ContainerName: ${{parameters.storageAccount.containerName}}
+    BlobPrefix:  ${{parameters.storageAccount.blobPrefix}}
+    outputStorageUri: 'storageAccountURI'
+    outputStorageContainerSasToken: 'storageAccountSASToken'
+    sasTokenTimeOutInMinutes: '60'
+
+    

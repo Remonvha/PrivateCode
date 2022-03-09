@@ -1,0 +1,5 @@
+steps:
+#Publish Artifact task : https://docs.microsoft.com/nl-nl/azure/devops/pipelines/artifacts/pipeline-artifacts?view=azure-devops&tabs=yaml
+- publish: ${{parameters.templateDirectory}}
+  displayName: Publish Artifacts
+  artifact: ${{parameters.artifactName}}

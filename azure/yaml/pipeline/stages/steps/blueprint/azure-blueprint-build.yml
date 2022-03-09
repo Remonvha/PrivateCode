@@ -1,0 +1,16 @@
+steps:
+  - task: AzurePowerShell@5
+    name: Powershell_Build_Blueprint
+    inputs:
+      azureSubscription: ${{parameters.azureSubscription}}
+      ScriptType: 'FilePath'
+      scriptPath: '${{parameters.blueprint.powershellPath}}/blueprint-build.ps1'
+      ScriptArguments: 
+        -mgId              '${{parameters.blueprint.managementGroupId}}'`
+        -BlueprintFolder   '${{parameters.blueprint.folder}}'`
+        -blueprintName     '${{parameters.blueprint.name}}'`
+        -spnId             '${{parameters.sp.appId}}'`
+        -spnPass           '${{parameters.sp.secret}}'`
+        -tenantId  	       '${{parameters.blueprint.tenantId}}'`
+        -VersionId         '${{parameters.blueprint.VersionId}}'
+      azurePowerShellVersion: 'LatestVersion'

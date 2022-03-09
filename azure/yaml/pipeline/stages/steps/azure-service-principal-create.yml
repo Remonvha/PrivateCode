@@ -1,0 +1,18 @@
+# performs a inline powershell Script with output variable
+steps:
+  - task: AzurePowerShell@5
+    displayName: Create-Service-Principal
+    name: spCreate
+    inputs:
+      azureSubscription: ${{parameters.azureSubscription}}
+      ScriptType: 'InlineScript'
+      Inline: |
+        Write-Host "Starting creating Service Principal"
+        $sp=New-AzADServicePrincipal -DisplayName '${{parameters.spDisplayName}}' -Role Owner -Scope '/providers/Microsoft.Management/managementGroups/${{parameters.blueprint.managementGroupId}}'
+        $spAppId=$sp.ApplicationId
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($sp.Secret)
+        $spSecret = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        echo "##vso[task.setvariable variable=spAppId;isOutput=true]$spAppId"
+        echo "##vso[task.setvariable variable=spSecret;isOutput=true]$spSecret"
+        Write-Host "Creating Service Principal succeeded"
+      azurePowerShellVersion: 'LatestVersion'
