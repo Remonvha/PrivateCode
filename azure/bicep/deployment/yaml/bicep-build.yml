@@ -1,0 +1,28 @@
+steps:
+# Install the latest release of the bicep CLI binaries
+  - task: AzureCLI@2
+    displayName: Azure CLI Bicep Build
+    inputs:
+      azureSubscription: ${{parameters.azureSubscription}}
+      scriptType: ps
+      scriptLocation: inlineScript 
+      inlineScript: |
+        az bicep install
+        az bicep build              -f ${{parameters.bicep.path}}/${{parameters.bicep.templateFile}} 
+        az deployment group what-if -f ${{parameters.bicep.path}}/${{parameters.bicep.templateFile}} `
+                                    -p ${{parameters.bicep.path}}/${{parameters.bicep.parameterFile}} `
+                                    -g ${{parameters.bicep.resourceGroup}} 
+ 
+  - task: CopyFiles@2
+    displayName: 'Copy parameter files to: $(build.artifactstagingdirectory)/bicep-arm'
+    inputs:
+      SourceFolder: ${{parameters.bicep.path}}
+      Contents: |
+        **/*.json
+        **/*.bicep
+      TargetFolder: '$(build.artifactstagingdirectory)/bicep-arm'
+
+  - publish: $(Build.ArtifactStagingDirectory)/bicep-arm
+    displayName: 'Publish bicep-arm Artifacts'
+    artifact: ${{parameters.bicep.artifactName}}
+    

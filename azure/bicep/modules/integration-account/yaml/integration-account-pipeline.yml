@@ -1,0 +1,75 @@
+# CI pipeline will be started on every branch
+#Comment Code Block Ctrl+K+C / Ctrl+K+U
+#Indent ctrl + [  or ctrl + ]
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+    - topic/*
+  paths:
+    include:
+    - platform/bicep/modules/integration-account/*
+    exclude:
+    - README.md
+
+variables:
+  location: westeurope
+
+# Use build definition name for build/release numbers
+name: $(BuildDefinitionName).$(Year:yy)$(DayOfYear)$(rev:.r)
+
+# Call the build process template
+stages:
+- stage: Build
+  jobs:
+  - template: integration-account-build.yml
+    parameters:
+      artifacts:
+        - name: bicep
+          templateDirectory: $(Build.Repository.LocalPath)/platform/bicep/modules/integration-account
+      azureSubscription: harvesthouse-dev
+      bicep:
+        path:  $(Build.Repository.LocalPath)/platform/bicep/modules/integration-account
+        parametersFile:  parameters/orchestrator.parameters-dev.json
+        resourceGroup: rg-shared-dev
+        templateFile:  integration-account.bicep
+      environment: dev
+      location: $(location)
+      pool:
+        name: Azure pipelines
+        vmImage: windows-2019
+      resourceGroup: rg-cicd-dev
+      storageAccount:
+        blobPrefix: $(Build.BuildNumber)
+        containerName: build
+        name: stcicdharvesthousedev
+      
+
+#Call the release process template      
+- stage: Development 
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - template: integration-account-release.yml
+    parameters:
+      jobName: dev_release
+      azureSubscription: harvesthouse-dev
+      bicep:
+        artifactName: bicep
+        parametersFile:  /parameters/orchestrator.parameters-dev.json
+        resourceGroup: rg-shared-dev
+        templateFile:  integration-account.bicep
+      devOpsEnvironment: platform
+      environment: dev
+      pool:
+        name: Azure pipelines
+        vmImage: windows-2019
+      location: $(location)
+      resourceGroup: rg-shared-dev
+      storageAccount:
+        blobPrefix: $(Build.BuildNumber)
+        containerName: deploy
+        name: stcicdharvesthousedev
+  

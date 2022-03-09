@@ -1,0 +1,60 @@
+# Platform CICD Pipeline for the 
+# Use build definition name for build/release numbers
+name: $(BuildDefinitionName).$(Year:yy)$(DayOfYear)$(rev:.r)
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - main
+    - master
+  paths:
+    include:
+    - platform/*
+    exclude:
+    - platform/deployment/*
+  
+variables:
+  location: westeurope
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  isMaster: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
+  buildDefName: $[replace(variables['Build.BuildNumber'], ' ', '_')]
+
+stages:
+
+# Call the build process template
+- stage: Build
+  jobs:   
+  - template: stages/build-stage.yml
+    parameters:
+      azureSubscription: <<DevOps Service Connection>>
+      pool:
+        name: Azure pipelines
+        vmImage: windows-latest
+      bicep: 
+        path: platform
+        templateFile: main.bicep
+        parameterFile: parameters/orchestrator.parameters-tst.json
+        resourceGroup: <<resourceGroup>>
+        artifactName: bicep-build-artifact
+
+# Call the release process template
+- stage: DevTest
+  dependsOn: Build
+  condition: succeeded()
+  jobs:  
+  - template: stages/release-stage.yml
+    parameters:
+      azureSubscription: <<DevOps Service Connection>>
+      location: $(location)
+      devOpsEnvironment: DevTest
+      buildDefName: $(buildDefName)
+      pool:
+        name: Azure pipelines
+        vmImage: windows-latest
+      bicep: 
+        parameterFile: parameters/orchestrator.parameters-tst.json
+        resourceGroup: <<resourceGroup>>
+        artifactName: bicep-build-artifact
+        

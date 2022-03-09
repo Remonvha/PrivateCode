@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "applicationInsights": {
+      "value": {
+        "name": "appi-shared-dev",
+        "resourceGroup": "rg-shared-dev"
+      }
+    },
+    "functionApps": {
+      "value": [
+        {
+          "appServicePlan": {
+            "name": "plan-kennisavond-dev",
+            "sku": {
+              "name": "Y1",
+              "tier": "Dynamic",
+              "size": "Y1",
+              "family": "Y",
+              "capacity": 0
+            }
+          },
+          "name": "func-kennisavond-dev",
+          "storageAccount": {
+            "name": "kennisavondsa",
+            "properties": {
+              "accessTier": "Hot",
+              "networkAcls": {
+                "bypass": "AzureServices",
+                "defaultAction": "Allow"
+              },
+              "supportsHttpsTrafficOnly": true,
+              "isHnsEnabled": false
+            },
+            "sku": {
+              "name": "Standard_LRS",
+              "tier": "Standard"
+            },
+            "kind": "StorageV2"
+          }
+        },
+        {
+          "appServicePlan": {
+            "name": "plan-kennisavond2-dev",
+            "sku": {
+              "name": "Y1",
+              "tier": "Dynamic",
+              "size": "Y1",
+              "family": "Y",
+              "capacity": 0
+            }
+          },
+          "name": "func-kennisavond2-dev",
+          "storageAccount": {
+            "name": "kennisavond2sa",
+            "properties": {
+              "accessTier": "Hot",
+              "networkAcls": {
+                "bypass": "AzureServices",
+                "defaultAction": "Allow"
+              },
+              "supportsHttpsTrafficOnly": true,
+              "isHnsEnabled": false
+            },
+            "sku": {
+              "name": "Standard_LRS",
+              "tier": "Standard"
+            },
+            "kind": "StorageV2"
+          }
+        }
+      ]
+    },
+    "general": {
+      "value": {
+        "location": "westeurope",
+        "tags": {}
+      }
+    }
+  }
+}

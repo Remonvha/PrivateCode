@@ -1,0 +1,16 @@
+jobs:
+- job: buildAndVerify
+  displayName: Build/Verification
+  continueOnError: false
+  pool: ${{parameters.pool}}
+
+  workspace:
+    clean: all
+
+  steps:
+  #Build Bicep
+  - template: steps/bicep-build.yml
+    parameters:
+      azureSubscription: ${{parameters.azureSubscription}}
+      bicep: ${{parameters.bicep}} 
+

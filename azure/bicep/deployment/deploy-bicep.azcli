@@ -1,0 +1,19 @@
+$tenant = 'Franke'
+$subscription = 'Stefan Franke'
+$outputDirectory = 'D:\Azure Bicep\Bicep output'
+
+#bicep build main.bicep
+
+
+#az login --tenant $tenant
+
+az account set --subscription $subscription
+az deployment group create  -f ./bicep/main.bicep -g rg-bicep-kennissessie --parameters ./bicep/parameters/orchestrator.parameters-dev.json 
+
+#az deployment group what-if -f ./bicep/main.bicep -g rg-bicep-kennissessie --parameters ./bicep/parameters/orchestrator.parameters-dev.json 
+
+
+##Build Bicep template into output directory
+bicep build ./bicep/main.bicep --outdir $outputDirectory
+
+

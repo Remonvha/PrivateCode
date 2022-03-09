@@ -1,0 +1,37 @@
+jobs:
+  - deployment: 
+    environment: ${{parameters.devOpsEnvironment}}
+    continueOnError: false
+    pool: ${{ parameters.pool }}
+    workspace:
+      clean: all
+
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+            - task: AzureFileCopy@3
+              displayName: 'Copy artifact files'
+              inputs:
+                SourcePath: $(Pipeline.Workspace)/${{parameters.bicep.artifactName}}
+                azureSubscription: ${{parameters.azureSubscription}}
+                Destination: AzureBlob
+                storage: ${{parameters.storageAccount.name}}
+                ContainerName: ${{parameters.storageAccount.containerName}}
+                BlobPrefix:  ${{parameters.storageAccount.blobPrefix}}
+                outputStorageUri: storageAccountURI
+                outputStorageContainerSasToken: storageAccountSASToken
+                sasTokenTimeOutInMinutes: 60
+
+            
+            # Install the latest release of the bicep CLI binaries
+            - task: AzureCLI@2
+              displayName: Azure CLI Bicep Deployment
+              inputs:
+                azureSubscription: ${{parameters.azureSubscription}}
+                scriptType: ps
+                scriptLocation: inlineScript
+                inlineScript: |
+                  $storageAccountCICD='{ ""url"" : ""$(storageAccountURI)${{parameters.storageAccount.blobPrefix}}"", ""sasToken"": ""$(storageAccountSASToken)"" }'
+                  az deployment group create -f $(Pipeline.Workspace)/${{parameters.bicep.artifactName}}/${{parameters.bicep.templateFile}} -g ${{parameters.bicep.resourceGroup}} -p $(Pipeline.Workspace)/${{parameters.bicep.artifactName}}/${{parameters.bicep.parametersFile}} -p storageAccountCICD=$storageAccountCICD
+
