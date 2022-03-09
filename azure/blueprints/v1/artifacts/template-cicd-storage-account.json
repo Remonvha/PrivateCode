@@ -1,0 +1,101 @@
+{
+  "kind": "template",
+  "properties": {
+    "displayName": "st{env}cicd",
+    "description": "Storage account for deployments from Azure DevOps.",
+    "dependsOn": [],
+    "template": {
+      "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "general": {
+          "type": "object"
+        },
+        "storageAccount": {
+          "type": "array"
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Storage/storageAccounts",
+          "apiVersion": "2019-06-01",
+          "name": "[parameters('storageAccount')[copyIndex()].name]",
+          "location": "[parameters('general').location]",
+          "tags": "[parameters('general').tags]",
+          "sku": "[parameters('storageAccount')[copyIndex()].sku]",
+          "kind": "[parameters('storageAccount')[copyIndex()].kind]",
+          "properties": {
+            "networkAcls": {
+              "bypass": "AzureServices",
+              "defaultAction": "Allow"
+            },
+            "supportsHttpsTrafficOnly": true,
+            "encryption": {
+              "services": {
+                "file": {
+                  "keyType": "Account",
+                  "enabled": true
+                },
+                "blob": {
+                  "keyType": "Account",
+                  "enabled": true
+                }
+              },
+              "keySource": "Microsoft.Storage"
+            },
+            "accessTier": "Hot"
+          },
+          "copy": {
+            "name": "storageAccount-copy",
+            "mode": "Parallel",
+            "count": "[length(parameters('storageAccount'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts/managementPolicies",
+              "apiVersion": "2019-04-01",
+              "name": "[concat(parameters('storageAccount')[copyIndex()].name, '/', 'default')]",
+              "dependsOn": [
+                "[parameters('storageAccount')[copyIndex()].name]"
+              ],
+              "properties": {
+                "policy": {
+                  "rules": [
+                    {
+                      "enabled": "true",
+                      "name": "[parameters('storageAccount')[copyIndex()].deletePolicyName]",
+                      "type": "Lifecycle",
+                      "definition": {
+                        "actions": {
+                          "baseBlob": {
+                            "delete": {
+                              "daysAfterModificationGreaterThan": "[parameters('storageAccount')[copyIndex()].deleteAfterDays]"
+                            }
+                          }
+                        },
+                        "filters": {
+                          "blobTypes": [
+                            "blockBlob"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "resourceGroup": "rg-releasemanagement",
+    "parameters": {
+      "general": {
+        "value": "[parameters('general')]"
+      },
+      "storageAccount": {
+        "value": "[parameters('storageAccount')]"
+      }
+    }
+  }
+}

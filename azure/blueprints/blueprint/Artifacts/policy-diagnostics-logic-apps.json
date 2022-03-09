@@ -1,0 +1,16 @@
+{
+  "kind": "policyAssignment",
+  "properties": {
+    "displayName": "Diagnostic logs in Logic Apps should be enabled",
+    "dependsOn": [],
+    "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/34f95f76-5386-4de7-b824-0d8478470c9d",
+    "parameters": {
+      "effect": {
+        "value": "AuditIfNotExists"
+      },
+      "requiredRetentionDays": {
+        "value": "365"
+      }
+    }
+  }
+}

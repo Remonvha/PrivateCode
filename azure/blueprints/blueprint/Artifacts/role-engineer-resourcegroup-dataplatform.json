@@ -1,0 +1,12 @@
+{
+  "kind": "roleAssignment",
+  "properties": {
+    "displayName":  "PitWall-Engineer : Reader",
+    "dependsOn": [],
+    "roleDefinitionId": "/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7",
+    "principalIds": [
+      "[parameters('roles').dataEngineer.adObjectId]"
+    ],
+    "resourceGroup": "rg-dataplatform"
+  }
+}

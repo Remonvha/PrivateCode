@@ -1,0 +1,16 @@
+{
+  "kind": "policyAssignment",
+  "properties": {
+    "displayName": "Diagnostic logs in Event Hub should be enabled",
+    "dependsOn": [],
+    "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/83a214f7-d01a-484b-91a9-ed54470c9a6a",
+    "parameters": {
+      "effect": {
+        "value": "AuditIfNotExists"
+      },
+      "requiredRetentionDays": {
+        "value": "365"
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "kind": "roleAssignment",
+  "properties": {
+    "displayName": "PitWall-Administrator : Owner",
+    "dependsOn": [],
+    "roleDefinitionId": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+    "principalIds": [
+      "[parameters('roles').administrator.adObjectId]"
+    ]
+  }
+}

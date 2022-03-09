@@ -1,0 +1,122 @@
+{
+  "properties": {
+    "targetScope": "subscription",
+    "parameters": {
+      "general": {
+        "type": "object",
+        "defaultValue": {
+          "location": "westeurope",
+          "tags": {
+            "CostCenter": "{CostCenter}",
+            "CreationDate": "{dd-MM-yyyy}",
+            "Env": "{Env}",
+            "LastModifiedDate": "{dd-MM-yyyy}",
+            "Owner": "{Owner}",
+            "Project": "{Project}"
+          }
+        }
+      },
+      "logAnalytics": {
+        "type": "object",
+        "defaultValue": {
+          "name": "{log-analytics-name}",
+          "retentionInDays": "7",
+          "sku": "Free",
+          "query": [
+            {
+              "name": "logicapp-logicapp",
+              "category": "Logic App",
+              "displayName": "Logic App",
+              "query": "AzureDiagnostics\r\n | where TimeGenerated > ago(60d) \r\n | summarize TimeGenerated = max(TimeGenerated) by resource_runId_s, startTime_t, resource_workflowName_s\r\n |join (\r\n AzureDiagnostics \r\n ) on resource_runId_s, TimeGenerated \r\n | project TimeGenerated, resource_workflowName_s, resource_runId_s, Resource, startTime_t, endTime_t, OperationName, error_message_s, status_s"
+            },
+            {
+              "name": "adf-adftrigger",
+              "category": "ADF",
+              "displayName": "ADF Trigger",
+              "query": "ADFTriggerRun \r\n| project \r\nTimeGenerated \r\n, TriggerName\r\n, TriggerId \r\n, Category \r\n, Type\r\n, Start \r\n, Status\r\n, Parameters\r\n| extend ScheduleTime = tostring(parse_json(Parameters).ScheduleTime)\r\n| where TimeGenerated > ago(60d)"
+            },
+            {
+              "name": "adf-adffull",
+              "category": "ADF",
+              "displayName": "ADF_Full",
+              "query": "AzureDiagnostics\r\n| project TimeGenerated , triggerName_s , triggerId_s , SystemParameters_TriggerId_s , Parameters_TriggerTime_t , Parameters_ScheduleTime_t , pipelineName_s , pipelineRunId_g , Category , ResourceType , activityName_s , start_t , end_t , activityType_s , status_s , Output_rowsRead_d , Output_rowsCopied_d , Input_sink_preCopyScript_s , Input_storedProcedureName_s, Error_details_s , Error_errorCode_s , Error_failureType_s , Error_message_s , Output_billingReference_billableDuration_s\r\n| where TimeGenerated > ago(60d) and ResourceType == 'FACTORIES'"
+            },
+            {
+              "name": "aas-aasdiagnostic",
+              "category": "AAS",
+              "displayName": "AAS Diagnostic",
+              "query": "AzureDiagnostics\r\n| project \r\nResourceProvider\r\n,ResourceType\r\n,ResourceGroup\r\n,SubscriptionId\r\n,TenantId\r\n,SourceSystem\r\n,concat\r\n,Resource\r\n,ServerName_s\r\n,OperationName\r\n,TimeGenerated\r\n,name_s\r\n,value_s\r\n| where TimeGenerated > ago(60d) and ResourceProvider == 'MICROSOFT.ANALYSISSERVICES'"
+            },
+            {
+              "name": "adf-adfpipeline",
+              "category": "ADF",
+              "displayName": "ADF_Pipeline",
+              "query": "ADFPipelineRun\r\n| project \r\nTimeGenerated \r\n, RunId \r\n, Status\r\n, SystemParameters\r\n, PipelineName\r\n, Category \r\n, Type \r\n, Start \r\n, End \r\n, EventMessage\r\n| extend TriggerId = tostring(parse_json(SystemParameters).TriggerId)\r\n| extend SubscriptionId = tostring(parse_json(SystemParameters).SubscriptionId)\r\n| where TimeGenerated > ago(60d)"
+            },
+            {
+              "name": "aas-aasmetrics",
+              "category": "AAS",
+              "displayName": "AAS Metrics",
+              "query": "AzureMetrics\r\n| where TimeGenerated > ago(60d)"
+            },
+            {
+              "name": "logicapp-logicappheader",
+              "category": "Logic App",
+              "displayName": "Logic App Header",
+              "query": "AzureDiagnostics\r\n | where TimeGenerated > ago(60d) \r\n | summarize TimeGenerated = max(TimeGenerated) by resource_runId_s, startTime_t, resource_workflowName_s\r\n |join (\r\n AzureDiagnostics \r\n ) on resource_runId_s, TimeGenerated \r\n | project TimeGenerated, resource_workflowName_s, resource_runId_s, Resource, startTime_t, endTime_t, OperationName, error_message_s, status_s"
+            },
+            {
+              "name": "adf-adfactivity",
+              "category": "ADF",
+              "displayName": "ADF_Activity",
+              "query": "ADFActivityRun \r\n| project \r\nTimeGenerated \r\n, PipelineName \r\n, PipelineRunId \r\n, ActivityRunId \r\n, Category \r\n, Type\r\n, ActivityName \r\n, Start\r\n, End \r\n, ActivityType \r\n, Status\r\n, Input\r\n, Output\r\n, Error\r\n, ErrorCode\r\n, ErrorMessage \r\n| extend RowsCopied = tostring(parse_json(Output).rowsCopied) \r\n| extend RowsRead = tostring(parse_json(Output).rowsRead) \r\n| extend CopyDuration = tostring(parse_json(Output).copyDuration) \r\n| extend StoredProcedureName = tostring(parse_json(Input).storedProcedureName) \r\n| extend PipelineReferenceName = tostring(parse_json(Input).Pipeline.referenceName)\r\n| extend PreCopyScript = tostring(parse_json(Input).sink.preCopyScript)\r\n| extend ErrorDetail = tostring(parse_json(Error).details)\r\n| extend ErrorCode = tostring(parse_json(Error).errorCode)\r\n| extend ErrorType = tostring(parse_json(Error).failureType)\r\n| extend Errormessage = tostring(parse_json(Error).message)"
+            }
+          ]
+        }
+      },
+      "roles": {
+        "type": "object",
+        "defaultValue": {
+          "administrator": {
+            "name": "PitWall-Administrator",
+            "adObjectId": "{adObjectId}"
+          },
+          "developer": {
+            "name": "PitWall-Developer",
+            "adObjectId": "{adObjectId}"
+          },
+          "reader": {
+            "name": "PitWall-Reader",
+            "adObjectId": "{adObjectId}"
+          },
+          "dataEngineer": {
+            "name": "PitWall-Engineer",
+            "adObjectId": "{adObjectId}"
+          }
+        }
+      },
+      "storageAccount": {
+        "type": "array",
+        "defaultValue": [
+          {
+            "deleteAfterDays": 1,
+            "deletePolicyName": "deleteAfterOneDay",
+            "displayName": "{storage-account-display-name}",
+            "kind": "StorageV2",
+            "name": "{storage-account-name}",
+            "sku": {
+              "name": "Standard_LRS",
+              "tier": "Standard"
+            }
+          }
+        ]
+      }
+    },
+    "resourceGroups": {
+      "rg-dataplatform": {},
+      "rg-monitoring": {},
+      "rg-releasemanagement": {},
+      "rg-shared": {}
+    }
+  }
+}

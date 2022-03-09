@@ -1,0 +1,40 @@
+jobs:
+- job: 'buildAndVerify_${{parameters.jobName}}'
+  displayName: Build/Verification
+  continueOnError: true
+  pool: ${{parameters.pool}}
+
+  workspace:
+    clean: all
+
+  steps:
+  #Create Service Principal for blueprint deployment   
+  - template: ${{ format('{0}/{1}', parameters.azPipelineTemplateStepPath, 'azure-service-principal-create.yml') }}   # Template reference
+    parameters:
+      azureSubscription: ${{parameters.azureSubscription}}
+      spDisplayName: ${{parameters.spDisplayName}}
+      blueprint: ${{parameters.blueprint}}
+  #Build blueprint   
+  - template: ${{ format('{0}/{1}', parameters.azPipelineTemplateStepPath, 'blueprint/azure-blueprint-build.yml') }}   
+    parameters:
+      azureSubscription: ${{parameters.azureSubscription}}
+      blueprint: ${{parameters.blueprint}}
+      sp:  #sp variable is generated in: azure-service-principal-create.yml
+        appId:     $(spCreate.spAppId)
+        secret: $(spCreate.spSecret)
+
+  #Remove Service Principal 
+  - template: ${{ format('{0}/{1}', parameters.azPipelineTemplateStepPath, 'azure-service-principal-remove.yml') }}   # Template reference 
+    parameters:
+      azureSubscription: ${{parameters.azureSubscription}}
+      sp:
+        appId: $(spCreate.spAppId)
+
+    #Publish Artifact 
+  - template: ${{ format('{0}/{1}', parameters.azPipelineTemplateStepPath, 'publish-artifact.yml') }}   # Template reference 
+    parameters:
+      artifact: ${{parameters.artifact.blueprintScript}}
+
+  - template: ${{ format('{0}/{1}', parameters.azPipelineTemplateStepPath, 'publish-artifact.yml') }}   # Template reference 
+    parameters:
+      artifact: ${{parameters.artifact.blueprint}}
