@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 1",
+	"properties": {
+		"content": {
+			"query": "SELECT ProductCategory\n,SUM(Revenue) AS TotalRevenue\n,SUM(RevenueTarget) AS TotalRevenueTarget\n,(SUM(RevenueTarget) - SUM(Revenue)) AS Delta\nFROM [wwi].[CampaignAnalytics]\nGROUP BY ProductCategory",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "SQLPool01",
+				"poolName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
